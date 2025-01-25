@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const pool = require('./database');
+const productRoutes = require('./routes/product');
 
 // Create Express app
 const app = express();
@@ -12,8 +13,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Initialize database
 (async () => {
-  const connection = await pool.getConnection();
-  await connection.query(`
+    const connection = await pool.getConnection();
+    await connection.query(`
     CREATE TABLE IF NOT EXISTS products (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -21,10 +22,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
       history JSON
     );
   `);
-  connection.release();
+    connection.release();
 })();
+
+// Use routes
+app.use('/products', productRoutes);
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
