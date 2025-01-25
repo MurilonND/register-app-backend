@@ -24,5 +24,26 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Login a user
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    try {
+      const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+      const user = rows[0];
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+      res.json({ message: 'Login successful', user: { id: user.id, name: user.name, email: user.email } });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 module.exports = router;
