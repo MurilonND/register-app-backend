@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
 // Update product quantity (register entry/exit)
 router.patch('/:id', async (req, res) => {
     const { id } = req.params;
-    const { amount, type } = req.body; // type: 'entry' or 'exit'
+    const { amount, type } = req.body;
     if (!amount || !['entry', 'exit'].includes(type)) {
         return res.status(400).json({ error: 'Amount and valid type are required' });
     }
@@ -55,6 +55,20 @@ router.patch('/:id', async (req, res) => {
             [newQuantity, JSON.stringify(history), id]
         );
         res.json({ id, name: product.name, quantity: newQuantity, history });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete a product
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [result] = await pool.query('DELETE FROM products WHERE id = ?', [id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
