@@ -2,6 +2,21 @@ const express = require('express');
 const pool = require('../database');
 const router = express.Router();
 
+// Get product by ID
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+        const product = rows[0];
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all products
 router.get('/', async (req, res) => {
     try {
@@ -25,6 +40,36 @@ router.post('/', async (req, res) => {
             [name, quantity, JSON.stringify([])]
         );
         res.json({ id: result.insertId, name, quantity, history: [] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update product (name and quantity)
+router.put('/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, quantity } = req.body;
+
+    if (!name || quantity === undefined) {
+        return res.status(400).json({ error: 'Name and quantity are required' });
+    }
+
+    try {
+        const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+        const product = rows[0];
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Update product with new values
+        await pool.query(
+            'UPDATE products SET name = ?, quantity = ? WHERE id = ?',
+            [name, quantity, id]
+        );
+
+        // Return updated product details
+        res.json({ id, name, quantity });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
