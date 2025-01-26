@@ -2,6 +2,21 @@ const express = require('express');
 const pool = require('../database');
 const router = express.Router();
 
+// Get product by ID
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+        const product = rows[0];
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all products
 router.get('/', async (req, res) => {
     try {
